@@ -108,7 +108,7 @@ static void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects)
     }
 
     cv::imshow("image", image);
-    cv::waitKey(10);
+    cv::waitKey(2);
 }
 
 int main(int argc, char** argv)
@@ -117,7 +117,7 @@ int main(int argc, char** argv)
     mobilenet.load_param("mobilenet_ssd_voc_ncnn.param");
     mobilenet.load_model("mobilenet_ssd_voc_ncnn.bin");
     ncnn::Extractor ex = mobilenet.create_extractor();
-    //ex.set_num_threads(4);
+    ex.set_num_threads(2);
     
     cv::Mat input_image;
     cv::VideoCapture cam(0);
