@@ -66,6 +66,9 @@ else()
         add_definitions(-D__ARM_NEON)
         add_definitions(-D__ANDROID__)
     endif()
+    # wjy-add   ubuntu16.04 arm
+    add_subdirectory(examples)
+    add_subdirectory(benchmark)
     # add_definitions(-march=native)
     # add_definitions(-flto)
     add_definitions(-fvisibility=hidden -fvisibility-inlines-hidden)
@@ -82,9 +85,10 @@ elseif(IOS)
 endif()
 
 ##############################################
+# wjy 
+add_subdirectory(examples)
+add_subdirectory(benchmark)
 
-# add_subdirectory(examples)
-# add_subdirectory(benchmark)
 add_subdirectory(src)
 if(NOT ANDROID AND NOT IOS)
 add_subdirectory(tools)
