@@ -50,7 +50,8 @@ static int detect_mobilenet(const cv::Mat& bgr, std::vector<Object>& objects, nc
     for (int i=0; i<out.h; i++)
     {
         const float* values = out.row(i);
-
+        if(values[1]<0.6)  //without objects of low probability
+            continue;
         Object object;
         object.label = values[0];
         object.prob = values[1];
@@ -80,8 +81,8 @@ static void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects)
     {
         const Object& obj = objects[i];
 
-        fprintf(stderr, "%d = %.5f at %.2f %.2f %.2f x %.2f\n", obj.label, obj.prob,
-                obj.rect.x, obj.rect.y, obj.rect.width, obj.rect.height);
+        //fprintf(stderr, "%d = %.5f at %.2f %.2f %.2f x %.2f\n", obj.label, obj.prob,
+        //        obj.rect.x, obj.rect.y, obj.rect.width, obj.rect.height);
 
         cv::rectangle(image, obj.rect, cv::Scalar(255, 0, 0));
 
