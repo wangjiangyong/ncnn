@@ -28,6 +28,9 @@ target_link_libraries(mobilenetv2ssdlite ncnn ${OpenCV_LIBS})
 add_executable(mobilenetssd mobilenetssd.cpp)
 target_link_libraries(mobilenetssd ncnn ${OpenCV_LIBS})
 
+add_executable(mobilenetssd_camera mobilenetssd_camera.cpp)
+target_link_libraries(mobilenetssd_camera ncnn ${OpenCV_LIBS})
+
 add_executable(squeezenetssd squeezenetssd.cpp)
 target_link_libraries(squeezenetssd ncnn ${OpenCV_LIBS})
 
