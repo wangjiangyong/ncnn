@@ -17,8 +17,16 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/opencv.hpp>
+#include <opencv2/tracking.hpp>
+#include <opencv2/core/ocl.hpp>
 
 #include "net.h"
+
+
+using namespace cv;
+using namespace std;
+
 
 struct Object
 {
@@ -27,7 +35,7 @@ struct Object
     float prob;
 };
 
-static int detect_mobilenet(const cv::Mat& bgr, std::vector<Object>& objects, ncnn::Extractor ex)
+static int detect_mobilenet(const cv::Mat& bgr, std::vector<Object>& objects, ncnn::Extractor& ex)
 {
     const int target_size = 300;
 
@@ -68,12 +76,7 @@ static int detect_mobilenet(const cv::Mat& bgr, std::vector<Object>& objects, nc
 
 static void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects)
 {
-    static const char* class_names[] = {"background",
-        "aeroplane", "bicycle", "bird", "boat",
-        "bottle", "bus", "car", "cat", "chair",
-        "cow", "diningtable", "dog", "horse",
-        "motorbike", "person", "pottedplant",
-        "sheep", "sofa", "train", "tvmonitor"};
+    static const char* class_names[] = {"background","face", "x", "x", "x"};
 
     cv::Mat image = bgr.clone();
 
@@ -113,11 +116,18 @@ static void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects)
 
 int main(int argc, char** argv)
 {
+
+    int frame_count = 0;
+    bool detect_flag = true;
+    bool initialized = false;
     ncnn::Net mobilenet;   
     mobilenet.load_param("face_det.param");
     mobilenet.load_model("face_det.bin");
     ncnn::Extractor ex = mobilenet.create_extractor();
     ex.set_num_threads(2);
+    
+    
+    Ptr<cv::Tracker> tracker = TrackerMedianFlow::create();
     
     cv::Mat input_image;
     cv::VideoCapture cam(0);
@@ -125,6 +135,9 @@ int main(int argc, char** argv)
     cam.set(CV_CAP_PROP_FRAME_HEIGHT, 768);
     if (!cam.isOpened()) return -1;
     
+    std::vector<Object> objects;
+    Rect2d bbox(287, 23, 86, 320);
+
     while (true) {
         cam >> input_image;
         if (input_image.empty()){
@@ -132,12 +145,55 @@ int main(int argc, char** argv)
               continue;
         }
 
-        std::vector<Object> objects;
-        clock_t begin1 = clock();
-        detect_mobilenet(input_image, objects, ex);
-        clock_t end1 = clock();
-        fprintf(stderr, "detect_mobilenetssd %f \n", (double)(end1 - begin1) / CLOCKS_PER_SEC );
-        draw_objects(input_image, objects);
+        frame_count++;
+        
+        if(detect_flag){
+            clock_t begin1 = clock();
+            detect_mobilenet(input_image, objects, ex);
+            clock_t end1 = clock();
+            fprintf(stderr, "detect_mobilenetssd %f \n", (double)(end1 - begin1) / CLOCKS_PER_SEC );
+            detect_flag = false;
+        }
+        bbox.x = objects[0].rect.x;
+        bbox.y = objects[0].rect.y;
+        bbox.width = objects[0].rect.width;
+        bbox.height = objects[0].rect.height;
+
+        if( !initialized ){
+            
+            tracker->init(input_image, bbox);
+            initialized = true;
+            //cv::rectangle(input_image, bbox, Scalar( 255, 0, 0 ), 2, 1 );
+            //cv::imshow("image", input_image);
+        }
+        else{
+            double timer = (double)cv::getTickCount();
+            // Update the tracking result
+            bool ok = tracker->update(input_image,bbox);
+            // Calculate Frames per second (FPS)
+            float fps = cv::getTickFrequency() / ((double)cv::getTickCount() - timer);
+            fprintf(stderr, "tracking fps %f \n",fps);
+            if (ok){
+                // Tracking success : Draw the tracked object
+                cv::rectangle(input_image, bbox, cv::Scalar( 255, 0, 0 ), 2, 1 );
+                
+            }
+            else{
+                detect_flag = true;
+                fprintf(stderr, "tracking errors \n");
+            }
+
+            cv::imshow("image", input_image);
+           
+            
+            // Exit if ESC pressed.
+            int k = cv::waitKey(2);
+            if(k == 27)
+                break;
+        }
+        
+
+        //draw_objects(input_image, objects);
     }
     return 0;
 }

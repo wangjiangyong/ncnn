@@ -69,11 +69,7 @@ static int detect_mobilenet(const cv::Mat& bgr, std::vector<Object>& objects, nc
 static void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects)
 {
     static const char* class_names[] = {"background",
-        "aeroplane", "bicycle", "bird", "boat",
-        "bottle", "bus", "car", "cat", "chair",
-        "cow", "diningtable", "dog", "horse",
-        "motorbike", "person", "pottedplant",
-        "sheep", "sofa", "train", "tvmonitor"};
+        "face", "x", "x", "x"};
 
     cv::Mat image = bgr.clone();
 
@@ -114,8 +110,8 @@ static void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects)
 int main(int argc, char** argv)
 {
     ncnn::Net mobilenet;   
-    mobilenet.load_param("face_det.param");
-    mobilenet.load_model("face_det.bin");
+    mobilenet.load_param("face_det_120000.param");
+    mobilenet.load_model("face_det_120000.bin");
     ncnn::Extractor ex = mobilenet.create_extractor();
     ex.set_num_threads(2);
     
