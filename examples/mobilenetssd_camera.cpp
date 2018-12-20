@@ -17,8 +17,8 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-
 #include "net.h"
+#include "benchmark.h"
 
 struct Object
 {
@@ -40,10 +40,14 @@ static int detect_mobilenet(const cv::Mat& bgr, std::vector<Object>& objects, nc
     const float norm_vals[3] = {1.0/127.5,1.0/127.5,1.0/127.5};
     in.substract_mean_normalize(mean_vals, norm_vals);
 
+    double start = ncnn::get_current_time();
     ex.input("data", in);
 
     ncnn::Mat out;
     ex.extract("detection_out",out);
+    
+    double time = ncnn::get_current_time() - start;
+    fprintf(stderr, "mobilenetssd_infer %f ms\n", time );
 
 //     printf("%d %d %d\n", out.w, out.h, out.c);
     objects.clear();
@@ -129,10 +133,12 @@ int main(int argc, char** argv)
         }
 
         std::vector<Object> objects;
-        clock_t begin1 = clock();
+        
+        //double start = ncnn::get_current_time();
         detect_mobilenet(input_image, objects, ex);
-        clock_t end1 = clock();
-        fprintf(stderr, "detect_mobilenetssd %f \n", (double)(end1 - begin1) / CLOCKS_PER_SEC );
+        //double time = ncnn::get_current_time() - start;
+        //fprintf(stderr, "detect_mobilenetssd %f \n", time );
+
         draw_objects(input_image, objects);
     }
     return 0;
